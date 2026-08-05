@@ -78,7 +78,6 @@ section("STEP 5: BINARY ENCODING")
 
 binary_map = {
     'gender':                 {'Male': 1, 'Female': 0},
-    'geographical_location':  {'California': 1, 'Other': 0},
     'dietary_habits':         {'High_Salt': 1, 'Low_Salt': 0},
     'endoscopic_images':      {'Abnormal': 1, 'Normal': 0},
     'biopsy_results':         {'Positive': 1, 'Negative': 0},
@@ -93,38 +92,52 @@ print(f"NaNs introduced by mapping: {nan_check} (should be 0)")
 
 
 # ============================================================
-# STEP 6: One-hot encode multi-category columns
+# STEP 6: One-hot encode low-cardinality multi-category columns
 # ------------------------------------------------------------
-# WHY: ethnicity and existing_conditions have 3+ categories, so a
-# single 0/1 column would falsely imply an order between them.
-# drop_first=True avoids the dummy variable trap.
+# WHY: mature_mirna_id, existing_conditions, and target_symbol
+# each have only 3 categories — cheap to one-hot encode, and a
+# single 0/1 column per category avoids implying a false order
+# between categories. existing_conditions needs its missing
+# values filled first, or get_dummies would silently drop those
+# rows' information instead of giving them their own column.
 # ============================================================
 section("STEP 6: ONE-HOT ENCODING")
 
-print(f"ethnicity categories: {df['ethnicity'].unique()}")
-print(f"existing_conditions categories: {df['existing_conditions'].unique()}")
+df['existing_conditions'] = df['existing_conditions'].fillna('None')
 
-df = pd.get_dummies(df, columns=['ethnicity', 'existing_conditions'], drop_first=True)
+onehot_cols = ['mature_mirna_id', 'existing_conditions', 'target_symbol']
+for col in onehot_cols:
+    print(f"{col}: {df[col].unique()}")
+
+df = pd.get_dummies(df, columns=onehot_cols, drop_first=True)
 
 new_dummy_cols = [c for c in df.columns
-                   if c.startswith('ethnicity_') or c.startswith('existing_conditions_')]
+                   if any(c.startswith(f"{col}_") for col in onehot_cols)]
 df[new_dummy_cols] = df[new_dummy_cols].astype(int)
-print(f"New dummy columns created: {new_dummy_cols}")
+print(f"\nNew dummy columns created: {new_dummy_cols}")
 
 
 # ============================================================
-# STEP 7: Drop high-cardinality ID columns
+# STEP 7: Drop unwanted / high-cardinality columns
 # ------------------------------------------------------------
-# WHY: miRNA/gene identifiers are not clinical measurements.
-# One-hot encoding them would create thousands of sparse, mostly
-# useless columns and cause severe overfitting.
+# WHY:
+# - geographical_location, ethnicity: dropped per project scope
+#   decision (excluded from this model).
+# - mature_mirna_acc: dropped as a redundant identifier —
+#   mature_mirna_id already captures the same miRNA information
+#   in one-hot form, so keeping both would be redundant.
+# - target_entrez: 9,000 unique values. One-hot encoding this
+#   would explode the dataset from ~24 columns to ~9,000+ mostly-
+#   empty columns, causing severe overfitting and heavy memory
+#   cost, for a feature that showed ~zero correlation with the
+#   label during EDA. Dropped instead.
 # ============================================================
-section("STEP 7: DROP ID COLUMNS")
+section("STEP 7: DROP COLUMNS")
 
-id_cols_to_drop = ['mature_mirna_acc', 'mature_mirna_id', 'target_symbol',
-                    'target_entrez', 'target_ensembl']
-df = df.drop(columns=id_cols_to_drop)
-print(f"Dropped: {id_cols_to_drop}")
+cols_to_drop = ['geographical_location', 'ethnicity',
+                 'mature_mirna_acc', 'target_entrez']
+df = df.drop(columns=cols_to_drop)
+print(f"Dropped: {cols_to_drop}")
 
 
 # ============================================================
