@@ -28,6 +28,10 @@ htmlcov/
 Dataset/gastric_cancer_cleaned.csv
 
 # Saved model files and artifacts
-models/
+models/saved/
 *.joblib
 *.pkl
+
+# Generated datasets
+gastric_cancer_engineered.csv
+Dataset/gastric_cancer_clustered.csv
