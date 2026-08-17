@@ -1,0 +1,37 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Virtual environments & python versions
+.venv/
+venv/
+ENV/
+.python-version
+
+# Test & coverage caches
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Project-specific generated datasets
+Dataset/gastric_cancer_cleaned.csv
+
+# Saved model files and artifacts
+models/saved/
+*.joblib
+*.pkl
+
+# Generated datasets
+gastric_cancer_engineered.csv
+Dataset/gastric_cancer_clustered.csv
